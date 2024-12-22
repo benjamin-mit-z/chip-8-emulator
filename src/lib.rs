@@ -497,5 +497,4 @@ pub fn emulate(interpreter: &mut Interpreter) {
         },
         _ => panic!("Invalid Instruction: {:#06x}", instruction),
     };
-    // println!("Instruction: {:#x04}\n{:#?}", instruction, interpreter.cpu);
 }
