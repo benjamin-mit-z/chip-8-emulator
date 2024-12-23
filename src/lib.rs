@@ -204,7 +204,7 @@ fn clear_screen(interpreter: &mut Interpreter) {
     }
 }
 
-pub fn emulate(interpreter: &mut Interpreter) {
+pub fn emulate(interpreter: &mut Interpreter, cycle_num: u64) -> bool {
     let instruction: u16 = fetch_instruction(interpreter);
     /*println!("Instruction: {:#06x}\n{:#?}", instruction, interpreter.cpu);
     let mut guess = String::new();
@@ -212,18 +212,23 @@ pub fn emulate(interpreter: &mut Interpreter) {
         .read_line(&mut guess)
         .expect("Failed to read line");*/
     interpreter.cpu.programm_counter += 2;
-    if interpreter.cpu.delay_timer > 0 {
-        interpreter.cpu.delay_timer -= 1;
-    }
-    if interpreter.cpu.sound_timer > 0 {
-        interpreter.cpu.sound_timer -= 1;
-    } else {
-        // println!("beep");
+    if cycle_num % 8 == 0 {
+        if interpreter.cpu.delay_timer > 0 {
+            interpreter.cpu.delay_timer -= 1;
+        }
+        if interpreter.cpu.sound_timer > 0 {
+            interpreter.cpu.sound_timer -= 1;
+        } else {
+            // println!("beep");
+        }
     }
     match instruction >> 12 {
         0 => match (instruction & 0x0F00) >> 8 {
             0x0 => match instruction & 0x00FF {
-                0xE0 => clear_screen(interpreter),
+                0xE0 => {
+                    clear_screen(interpreter);
+                    return true;
+                }
                 0xEE => {
                     interpreter.cpu.programm_counter =
                         interpreter.cpu.stack.pop().expect("Empty Stack popped")
@@ -415,6 +420,7 @@ pub fn emulate(interpreter: &mut Interpreter) {
                     }
                 }
             }
+            return true;
         }
         14 => match instruction & 0x00FF {
             0x9E => {
@@ -497,4 +503,5 @@ pub fn emulate(interpreter: &mut Interpreter) {
         },
         _ => panic!("Invalid Instruction: {:#06x}", instruction),
     };
+    return false;
 }
